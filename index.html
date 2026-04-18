@@ -22,37 +22,43 @@
         .header {
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: white;
-            padding: 15px 20px;
+            padding: 12px 20px;
             text-align: center;
             border-bottom: 2px solid #00b4d8;
             box-shadow: 0 2px 15px rgba(0,180,216,0.2);
         }
         
         .header h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: 2px;
             text-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         
         .header p {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.9;
-            margin-top: 5px;
+            margin-top: 3px;
             color: #90e0ef;
         }
         
         .map-container {
             width: 100%;
-            height: calc(100vh - 80px);
+            height: calc(100vh - 70px);
             position: relative;
             background: #1a1a1a;
+            overflow: hidden;
         }
         
         #map-frame {
             width: 100%;
             height: 100%;
             border: none;
+        }
+        
+        /* محاولة إخفاء عناصر Geomolg عبر CSS (قد لا تعمل بسبب CORS) */
+        .map-container iframe {
+            pointer-events: auto;
         }
         
         .controls {
@@ -72,7 +78,7 @@
             background: rgba(15, 32, 39, 0.95);
             color: white;
             border: 1px solid #00b4d8;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,180,216,0.3);
@@ -98,20 +104,20 @@
             color: white;
             font-size: 1.2rem;
             z-index: 999;
-            background: rgba(15, 32, 39, 0.9);
+            background: rgba(15, 32, 39, 0.95);
             padding: 20px 50px;
             border-radius: 50px;
             border: 1px solid #00b4d8;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            margin-right: 15px;
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
             border: 3px solid #00b4d8;
             border-top-color: transparent;
             border-radius: 50%;
@@ -127,7 +133,7 @@
             bottom: 10px;
             left: 10px;
             color: rgba(255,255,255,0.5);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             z-index: 1000;
             background: rgba(15, 32, 39, 0.7);
             padding: 5px 12px;
@@ -135,67 +141,45 @@
             backdrop-filter: blur(5px);
         }
         
-        .welcome-overlay {
+        /* طبقة تغطية لإخفاء العناصر غير المرغوبة (احتياطي) */
+        .overlay-hider {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
+            pointer-events: none;
+            z-index: 998;
+        }
+        
+        /* شريط علوي إضافي للتحكم */
+        .top-toolbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            animation: fadeIn 0.5s ease-out forwards;
+            gap: 8px;
         }
         
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        
-        .welcome-box {
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 100%);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            border: 1px solid #00b4d8;
-            box-shadow: 0 10px 40px rgba(0,180,216,0.3);
-            max-width: 400px;
-        }
-        
-        .welcome-box h2 {
-            color: #00b4d8;
-            font-size: 2rem;
-            margin-bottom: 15px;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        .welcome-box p {
-            color: #caf0f8;
-            margin-bottom: 30px;
-            font-size: 1.1rem;
-        }
-        
-        .welcome-box button {
-            background: #00b4d8;
-            color: #0f2027;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #90e0ef;
-        }
-        
-        .welcome-box button:hover {
-            background: #0077b6;
+        .top-toolbar button {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(15, 32, 39, 0.95);
             color: white;
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0,180,216,0.5);
+            border: 1px solid #00b4d8;
+            font-size: 18px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
         }
+        
+        .top-toolbar button:hover {
+            background: #00b4d8;
+        }
+        
+        /* إخفاء العناصر في iframe عبر JavaScript */
     </style>
 </head>
 <body>
@@ -205,17 +189,28 @@
     </div>
     
     <div class="map-container">
-        <div class="loading" id="loading">⏳ جاري تحميل الخريطة...</div>
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <span>⏳ جاري تحميل الخريطة...</span>
+        </div>
         
         <iframe 
             id="map-frame"
             src="https://geomolg.ps/L5/index.html?viewer=A3.V1"
             allow="geolocation; microphone; camera; fullscreen"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals">
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+            allowfullscreen="true">
         </iframe>
         
-        <div class="controls">
+        <!-- أزرار التحكم العلوية -->
+        <div class="top-toolbar">
             <button onclick="refreshMap()" title="تحديث الخريطة">🔄</button>
+            <button onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
+        </div>
+        
+        <!-- أزرار التحكم السفلية -->
+        <div class="controls">
+            <button onclick="refreshMap()" title="تحديث">🔄</button>
             <button onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
         </div>
         
@@ -228,9 +223,21 @@
         const mapFrame = document.getElementById('map-frame');
         const loading = document.getElementById('loading');
         
+        // محاولة حقن CSS لإخفاء العناصر غير المرغوبة (قد لا تعمل)
+        function tryInjectCSS() {
+            try {
+                // لا يمكن الوصول لمحتوى iframe بسبب CORS
+                // لكن نحاول عبر postMessage
+                console.log('⚠️ لا يمكن التحكم في محتوى Geomolg بسبب سياسات الأمان');
+            } catch(e) {
+                // تجاهل
+            }
+        }
+        
         // إخفاء التحميل عند اكتمال تحميل الإطار
         mapFrame.onload = function() {
             loading.style.display = 'none';
+            tryInjectCSS();
         };
         
         // إذا استغرق التحميل أكثر من 12 ثانية
@@ -239,7 +246,7 @@
         }, 12000);
         
         function refreshMap() {
-            loading.style.display = 'block';
+            loading.style.display = 'flex';
             mapFrame.src = mapFrame.src;
         }
         
@@ -251,14 +258,22 @@
             }
         }
         
-        // منع النقر بزر الفأرة الأيمن (اختياري)
-        document.addEventListener('contextmenu', function(e) {
-            // e.preventDefault(); // معطل للسماح بالنسخ
+        // اختصار لوحة المفاتيح: F5 للتحديث، F11 للملء
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F5') {
+                e.preventDefault();
+                refreshMap();
+            }
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
         });
         
         // رسالة في الكونسول
         console.log('%c🗺️ Balasi GiS Maping', 'font-size: 20px; color: #00b4d8; font-weight: bold;');
         console.log('%cنظام المعلومات الجغرافية - نسخة 2026', 'font-size: 14px; color: #90e0ef;');
+        console.log('%c⚠️ عناصر الإدخال الصوتي جزء من موقع Geomolg ولا يمكن إزالتها بالكامل', 'font-size: 12px; color: #ffaa00;');
     </script>
 </body>
 </html>
