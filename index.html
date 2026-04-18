@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>خريطة فلسطين</title>
+    <title>Balasi GiS Maping</title>
     <style>
         * {
             margin: 0;
@@ -20,29 +20,31 @@
         }
         
         .header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: white;
-            padding: 12px 16px;
+            padding: 15px 20px;
             text-align: center;
-            border-bottom: 2px solid #e74c3c;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 2px solid #00b4d8;
+            box-shadow: 0 2px 15px rgba(0,180,216,0.2);
         }
         
         .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: 1px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         
         .header p {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            margin-top: 4px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+            color: #90e0ef;
         }
         
         .map-container {
             width: 100%;
-            height: calc(100vh - 70px);
+            height: calc(100vh - 80px);
             position: relative;
             background: #1a1a1a;
         }
@@ -67,65 +69,25 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: rgba(26, 26, 46, 0.9);
+            background: rgba(15, 32, 39, 0.95);
             color: white;
-            border: 1px solid #e74c3c;
+            border: 1px solid #00b4d8;
             font-size: 24px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,180,216,0.3);
             backdrop-filter: blur(5px);
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
         
         .controls button:hover {
-            background: #e74c3c;
+            background: #00b4d8;
             transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,180,216,0.5);
         }
         
         .controls button:active {
             transform: scale(0.95);
-        }
-        
-        .city-selector {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(26, 26, 46, 0.9);
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #333;
-            max-height: 60vh;
-            overflow-y: auto;
-            width: 200px;
-        }
-        
-        .city-selector h3 {
-            color: #e74c3c;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            text-align: center;
-        }
-        
-        .city-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 5px;
-            background: #2c2c3e;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: right;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        
-        .city-btn:hover {
-            background: #e74c3c;
         }
         
         .loading {
@@ -136,9 +98,28 @@
             color: white;
             font-size: 1.2rem;
             z-index: 999;
-            background: rgba(0,0,0,0.7);
-            padding: 20px 40px;
+            background: rgba(15, 32, 39, 0.9);
+            padding: 20px 50px;
             border-radius: 50px;
+            border: 1px solid #00b4d8;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            border: 3px solid #00b4d8;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         .footer {
@@ -148,31 +129,79 @@
             color: rgba(255,255,255,0.5);
             font-size: 0.7rem;
             z-index: 1000;
-            background: rgba(0,0,0,0.3);
-            padding: 4px 8px;
+            background: rgba(15, 32, 39, 0.7);
+            padding: 5px 12px;
             border-radius: 20px;
+            backdrop-filter: blur(5px);
         }
         
-        /* إخفاء أي علامات تجارية داخل iframe */
-        iframe {
-            pointer-events: auto;
+        .welcome-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
         }
         
-        /* شريط التمرير للمدن */
-        .city-selector::-webkit-scrollbar {
-            width: 4px;
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
         
-        .city-selector::-webkit-scrollbar-thumb {
-            background: #e74c3c;
-            border-radius: 4px;
+        .welcome-box {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid #00b4d8;
+            box-shadow: 0 10px 40px rgba(0,180,216,0.3);
+            max-width: 400px;
+        }
+        
+        .welcome-box h2 {
+            color: #00b4d8;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .welcome-box p {
+            color: #caf0f8;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .welcome-box button {
+            background: #00b4d8;
+            color: #0f2027;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #90e0ef;
+        }
+        
+        .welcome-box button:hover {
+            background: #0077b6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,180,216,0.5);
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🗺️ الخريطة التفاعلية - فلسطين</h1>
-        <p>نسخة 2025 | صور عالية الدقة</p>
+        <h1>🗺️ Balasi GiS Maping</h1>
+        <p>نظام المعلومات الجغرافية المتقدم</p>
     </div>
     
     <div class="map-container">
@@ -185,103 +214,51 @@
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals">
         </iframe>
         
-        <div class="city-selector" id="citySelector">
-            <h3>📍 مدن الضفة الغربية</h3>
-            <button class="city-btn" onclick="setLocation(31.5333, 35.0950)">🏙️ الخليل</button>
-            <button class="city-btn" onclick="setLocation(31.7833, 35.2167)">🏙️ القدس</button>
-            <button class="city-btn" onclick="setLocation(31.9000, 35.2000)">🏙️ رام الله</button>
-            <button class="city-btn" onclick="setLocation(32.2211, 35.2544)">🏙️ نابلس</button>
-            <button class="city-btn" onclick="setLocation(31.7000, 35.2000)">🏙️ بيت لحم</button>
-            <button class="city-btn" onclick="setLocation(32.4610, 35.3000)">🏙️ جنين</button>
-            <button class="city-btn" onclick="setLocation(32.3117, 35.0271)">🏙️ طولكرم</button>
-            <button class="city-btn" onclick="setLocation(31.8500, 35.4500)">🏙️ أريحا</button>
-            <button class="city-btn" onclick="setLocation(32.1900, 34.9700)">🏙️ قلقيلية</button>
-            <button class="city-btn" onclick="setLocation(31.5000, 34.4667)">🏙️ غزة</button>
-        </div>
-        
         <div class="controls">
-            <button onclick="zoomIn()" title="تكبير">➕</button>
-            <button onclick="zoomOut()" title="تصغير">➖</button>
-            <button onclick="refreshMap()" title="تحديث">🔄</button>
-            <button onclick="toggleCityList()" title="المدن">📍</button>
+            <button onclick="refreshMap()" title="تحديث الخريطة">🔄</button>
+            <button onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
         </div>
         
         <div class="footer">
-            © 2026 | النسخة الاحترافية
+            © 2026 Balasi GiS Maping | جميع الحقوق محفوظة
         </div>
     </div>
 
     <script>
         const mapFrame = document.getElementById('map-frame');
         const loading = document.getElementById('loading');
-        const citySelector = document.getElementById('citySelector');
         
         // إخفاء التحميل عند اكتمال تحميل الإطار
         mapFrame.onload = function() {
             loading.style.display = 'none';
-            
-            // محاولة إخفاء شعار Esri/Geocortex (قد لا يعمل بسبب CORS)
-            try {
-                // لا يمكن التحكم في محتوى iframe بسبب Same-Origin Policy
-                // لكن يمكننا فقط الاعتماد على أن الموقع نفسه يبدو جيداً
-            } catch(e) {
-                // تجاهل أخطاء CORS
-            }
         };
         
-        // إذا استغرق التحميل أكثر من 10 ثوانٍ، أخفِ التحميل
+        // إذا استغرق التحميل أكثر من 12 ثانية
         setTimeout(() => {
             loading.style.display = 'none';
-        }, 10000);
-        
-        // دالة لتحديد موقع (لا يمكن التحكم المباشر في iframe)
-        // لكن يمكننا إعادة تحميل الصفحة مع بارامترات إذا كان الموقع يدعمها
-        function setLocation(lat, lon) {
-            // Geomolg قد لا يدعم البارامترات المباشرة
-            // لذلك نعتمد على المستخدم للتنقل يدوياً
-            alert('📍 انتقل إلى الإحداثيات:\n' + lat.toFixed(4) + ', ' + lon.toFixed(4) + '\n\nاستخدم أدوات التكبير/التصغير في الخريطة للوصول للموقع.');
-            
-            // نسخ الإحداثيات للحافظة
-            navigator.clipboard?.writeText(lat.toFixed(4) + ', ' + lon.toFixed(4));
-        }
-        
-        function zoomIn() {
-            // لا يمكن التحكم في iframe - نعطي تعليمات
-            alert('🔍 استخدم عجلة الفأرة أو أزرار + / - داخل الخريطة للتكبير');
-        }
-        
-        function zoomOut() {
-            alert('🔍 استخدم عجلة الفأرة أو أزرار + / - داخل الخريطة للتصغير');
-        }
+        }, 12000);
         
         function refreshMap() {
             loading.style.display = 'block';
             mapFrame.src = mapFrame.src;
         }
         
-        function toggleCityList() {
-            if (citySelector.style.display === 'none') {
-                citySelector.style.display = 'block';
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
             } else {
-                citySelector.style.display = 'none';
+                document.exitFullscreen();
             }
         }
         
-        // إخفاء قائمة المدن عند النقر خارجها
-        document.addEventListener('click', function(e) {
-            if (!citySelector.contains(e.target) && !e.target.closest('.controls button:last-child')) {
-                // لا نخفيها تلقائياً لتكون متاحة دائماً
-            }
-        });
-        
-        // منع النقر بزر الفأرة الأيمن (اختياري - للحماية)
+        // منع النقر بزر الفأرة الأيمن (اختياري)
         document.addEventListener('contextmenu', function(e) {
-            // e.preventDefault(); // غير مفعل - اتركه للمستخدم
+            // e.preventDefault(); // معطل للسماح بالنسخ
         });
         
-        // عرض رسالة ترحيب
-        console.log('%c🗺️ الخريطة التفاعلية - النسخة الاحترافية', 'font-size: 16px; color: #e74c3c; font-weight: bold;');
-        console.log('%cتم التحميل بنجاح', 'font-size: 12px; color: #00ff00;');
+        // رسالة في الكونسول
+        console.log('%c🗺️ Balasi GiS Maping', 'font-size: 20px; color: #00b4d8; font-weight: bold;');
+        console.log('%cنظام المعلومات الجغرافية - نسخة 2026', 'font-size: 14px; color: #90e0ef;');
     </script>
 </body>
 </html>
