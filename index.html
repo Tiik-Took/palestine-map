@@ -56,11 +56,6 @@
             border: none;
         }
         
-        /* محاولة إخفاء عناصر Geomolg عبر CSS (قد لا تعمل بسبب CORS) */
-        .map-container iframe {
-            pointer-events: auto;
-        }
-        
         .controls {
             position: absolute;
             bottom: 20px;
@@ -90,10 +85,6 @@
             background: #00b4d8;
             transform: scale(1.05);
             box-shadow: 0 6px 20px rgba(0,180,216,0.5);
-        }
-        
-        .controls button:active {
-            transform: scale(0.95);
         }
         
         .loading {
@@ -141,18 +132,6 @@
             backdrop-filter: blur(5px);
         }
         
-        /* طبقة تغطية لإخفاء العناصر غير المرغوبة (احتياطي) */
-        .overlay-hider {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 998;
-        }
-        
-        /* شريط علوي إضافي للتحكم */
         .top-toolbar {
             position: absolute;
             top: 10px;
@@ -179,7 +158,27 @@
             background: #00b4d8;
         }
         
-        /* إخفاء العناصر في iframe عبر JavaScript */
+        /* إشعار ملء الشاشة */
+        .fullscreen-hint {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,180,216,0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 1001;
+            backdrop-filter: blur(5px);
+            animation: fadeOut 3s forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes fadeOut {
+            0%, 70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -202,16 +201,18 @@
             allowfullscreen="true">
         </iframe>
         
-        <!-- أزرار التحكم العلوية -->
         <div class="top-toolbar">
             <button onclick="refreshMap()" title="تحديث الخريطة">🔄</button>
-            <button onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
+            <button onclick="toggleFullscreen()" id="fullscreenBtn" title="ملء الشاشة">⛶</button>
         </div>
         
-        <!-- أزرار التحكم السفلية -->
         <div class="controls">
             <button onclick="refreshMap()" title="تحديث">🔄</button>
             <button onclick="toggleFullscreen()" title="ملء الشاشة">⛶</button>
+        </div>
+        
+        <div id="fullscreenHint" class="fullscreen-hint" style="display: none;">
+            🖥️ تم تفعيل ملء الشاشة | اضغط ESC للخروج
         </div>
         
         <div class="footer">
@@ -222,43 +223,77 @@
     <script>
         const mapFrame = document.getElementById('map-frame');
         const loading = document.getElementById('loading');
+        const fullscreenHint = document.getElementById('fullscreenHint');
         
-        // محاولة حقن CSS لإخفاء العناصر غير المرغوبة (قد لا تعمل)
-        function tryInjectCSS() {
-            try {
-                // لا يمكن الوصول لمحتوى iframe بسبب CORS
-                // لكن نحاول عبر postMessage
-                console.log('⚠️ لا يمكن التحكم في محتوى Geomolg بسبب سياسات الأمان');
-            } catch(e) {
-                // تجاهل
+        // دالة تفعيل ملء الشاشة تلقائياً
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().then(() => {
+                    fullscreenHint.style.display = 'block';
+                    setTimeout(() => {
+                        fullscreenHint.style.display = 'none';
+                    }, 3000);
+                }).catch(err => {
+                    console.log('⚠️ تعذر تفعيل ملء الشاشة تلقائياً:', err);
+                });
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+        
+        // دالة تبديل ملء الشاشة
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                enterFullscreen();
+            } else {
+                document.exitFullscreen();
+                fullscreenHint.style.display = 'none';
+            }
+        }
+        
+        // مراقبة تغيير حالة ملء الشاشة
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+        
+        function updateFullscreenButton() {
+            const btn = document.getElementById('fullscreenBtn');
+            if (document.fullscreenElement) {
+                btn.textContent = '✕';
+                btn.title = 'خروج من ملء الشاشة';
+            } else {
+                btn.textContent = '⛶';
+                btn.title = 'ملء الشاشة';
             }
         }
         
         // إخفاء التحميل عند اكتمال تحميل الإطار
         mapFrame.onload = function() {
             loading.style.display = 'none';
-            tryInjectCSS();
+            
+            // تفعيل ملء الشاشة تلقائياً بعد تحميل الخريطة
+            setTimeout(() => {
+                enterFullscreen();
+            }, 500);
         };
         
         // إذا استغرق التحميل أكثر من 12 ثانية
         setTimeout(() => {
             loading.style.display = 'none';
-        }, 12000);
+            // محاولة تفعيل ملء الشاشة حتى لو لم تكتمل الخريطة
+            enterFullscreen();
+        }, 8000);
         
         function refreshMap() {
             loading.style.display = 'flex';
             mapFrame.src = mapFrame.src;
         }
         
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
-        
-        // اختصار لوحة المفاتيح: F5 للتحديث، F11 للملء
+        // اختصار لوحة المفاتيح
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F5') {
                 e.preventDefault();
@@ -268,12 +303,24 @@
                 e.preventDefault();
                 toggleFullscreen();
             }
+            if (e.key === 'Escape') {
+                fullscreenHint.style.display = 'none';
+            }
         });
+        
+        // محاولة تفعيل ملء الشاشة عند أول تفاعل (للمتصفحات التي تمنع التلقائي)
+        let fullscreenAttempted = false;
+        document.addEventListener('click', function initFullscreen() {
+            if (!fullscreenAttempted && !document.fullscreenElement) {
+                fullscreenAttempted = true;
+                enterFullscreen();
+            }
+        }, { once: false });
         
         // رسالة في الكونسول
         console.log('%c🗺️ Balasi GiS Maping', 'font-size: 20px; color: #00b4d8; font-weight: bold;');
         console.log('%cنظام المعلومات الجغرافية - نسخة 2026', 'font-size: 14px; color: #90e0ef;');
-        console.log('%c⚠️ عناصر الإدخال الصوتي جزء من موقع Geomolg ولا يمكن إزالتها بالكامل', 'font-size: 12px; color: #ffaa00;');
+        console.log('%c✅ سيتم تفعيل ملء الشاشة تلقائياً', 'font-size: 12px; color: #00ff00;');
     </script>
 </body>
 </html>
